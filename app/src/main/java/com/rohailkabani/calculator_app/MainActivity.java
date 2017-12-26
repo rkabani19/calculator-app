@@ -12,9 +12,12 @@ public class MainActivity extends AppCompatActivity {
     private EditText newNumber;
     private TextView displayOperation;
 
+    // Variables to hold the operands and type of calculations
     private Double operand1 = null;
-    private Double operand2 = null;
     private String pendingOperation = "=";
+
+    private static final String STATE_PENDING_OPERATION = " ";
+    private static final String STATE_OPERAND1 = " ";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,20 +38,20 @@ public class MainActivity extends AppCompatActivity {
         Button button7 = (Button) findViewById(R.id.button7);
         Button button8 = (Button) findViewById(R.id.button8);
         Button button9 = (Button) findViewById(R.id.button9);
+        Button buttonDot = (Button) findViewById(R.id.buttonDecimal);
 
-        Button buttonMultiply = (Button) findViewById(R.id.buttonMultiply);
+        Button buttonEquals = (Button) findViewById(R.id.buttonEqual);
         Button buttonDivide = (Button) findViewById(R.id.buttonDivide);
-        Button buttonPlus = (Button) findViewById(R.id.buttonPlus);
+        Button buttonMultiply = (Button) findViewById(R.id.buttonMultiply);
         Button buttonMinus = (Button) findViewById(R.id.buttonMinus);
-        Button buttonDecimal = (Button) findViewById(R.id.buttonDecimal);
+        Button buttonPlus = (Button) findViewById(R.id.buttonPlus);
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Button btn = (Button) view;
-                newNumber.append(btn.getText().toString());
+                Button b = (Button) view;
+                newNumber.append(b.getText().toString());
             }
         };
-
         button0.setOnClickListener(listener);
         button1.setOnClickListener(listener);
         button2.setOnClickListener(listener);
@@ -59,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         button7.setOnClickListener(listener);
         button8.setOnClickListener(listener);
         button9.setOnClickListener(listener);
-        buttonDecimal.setOnClickListener(listener);
+        buttonDot.setOnClickListener(listener);
 
         View.OnClickListener operationListener = new View.OnClickListener() {
             @Override
@@ -67,13 +70,104 @@ public class MainActivity extends AppCompatActivity {
                 Button btn = (Button) view;
                 String op = btn.getText().toString();
                 String value = newNumber.getText().toString();
-                if (value.length() > 0) {
-                    performOperation(value, op);
+                try {
+                    Double doubleValue = Double.valueOf(value);
+                    performOperation(doubleValue, op);
+                } catch (NumberFormatException e) {
+                    newNumber.setText("");
                 }
                 pendingOperation = op;
                 displayOperation.setText(pendingOperation);
             }
         };
 
+        buttonEquals.setOnClickListener(operationListener);
+        buttonDivide.setOnClickListener(operationListener);
+        buttonMultiply.setOnClickListener(operationListener);
+        buttonMinus.setOnClickListener(operationListener);
+        buttonPlus.setOnClickListener(operationListener);
+
+        Button buttonNeg = (Button) findViewById(R.id.buttonNeg);
+
+        View.OnClickListener negListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String value = newNumber.getText().toString();
+                if (value.length() == 0) {
+                    newNumber.setText("-");
+                } else {
+                    try {
+                        Double doubleValue = Double.valueOf(value);
+                        doubleValue *= -1;
+                        newNumber.setText(doubleValue.toString());
+                    } catch (NumberFormatException e) {
+                        newNumber.setText("");
+                    }
+                }
+            }
+        };
+
+        buttonNeg.setOnClickListener(negListener);
+    }
+
+    private void performOperation(Double value, String operation) {
+        if (null == operand1) {
+            operand1 = value;
+        } else {
+            if (pendingOperation.equals("=")) {
+                pendingOperation = operation;
+            }
+            switch (pendingOperation) {
+                case "=":
+                    operand1 = value;
+                    break;
+                case "/":
+                    if (value == 0) {
+                        operand1 = 0.0;
+                    } else {
+                        operand1 /= value;
+                    }
+                    break;
+                case "*":
+                    operand1 *= value;
+                    break;
+                case "-":
+                    operand1 -= value;
+                    break;
+                case "+":
+                    operand1 += value;
+                    break;
+            }
+        }
+
+        result.setText(operand1.toString());
+        newNumber.setText("");
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(STATE_PENDING_OPERATION, pendingOperation);
+        if (operand1 != null) {
+            outState.putDouble(STATE_OPERAND1, operand1);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        pendingOperation = savedInstanceState.getString(STATE_PENDING_OPERATION);
+        operand1 = savedInstanceState.getDouble(STATE_OPERAND1);
+        displayOperation.setText(pendingOperation);
     }
 }
+
+
+
+
+
+
+
+
+
+
